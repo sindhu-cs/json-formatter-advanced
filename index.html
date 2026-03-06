@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Refined Advance Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.13.1/src-noconflict/ace.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.13.1/src-noconflict/mode-json.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.13.1/src-noconflict/theme-monokai.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ace-builds@1.13.1/src-noconflict/theme-github.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #ecf0f1;
+        }
+
+        body.dark-mode .editor-panel,
+        body.dark-mode .tool-panel,
+        body.dark-mode .output-panel {
+            background: #34495e;
+            color: #ecf0f1;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            height: calc(100vh - 160px);
+            position: relative;
+        }
+
+        .editor-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .editor-tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab-btn {
+            padding: 15px 25px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            flex: 1;
+        }
+
+        .tab-btn.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+
+        .editor-container {
+            flex: 1;
+            position: relative;
+            height: 100%;
+        }
+
+        .ace-editor {
+            width: 100%;
+            height: 100%;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .tool-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 20px;
+            height: fit-content;
+        }
+
+        .tool-panel h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
+            color: white;
+        }
+
+        #apiUrl {
+            background: white;
+            border: 2px solid #e9ecef;
+            padding: 12px;
+            font-size: 14px;
+        }
+
+        .status-bar {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-ok { color: #56ab2f; }
+        .status-error { color: #ff416c; }
+
+        .char-counter {
+            font-family: monospace;
+        }
+
+        .history-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            height: 200px;
+            padding: 15px;
+        }
+
+        .history-item {
+            padding: 8px;
+            margin: 3px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            border-left: 3px solid #667eea;
+            transition: all 0.2s;
+        }
+
+        .history-item:hover {
+            background: #e3f2fd;
+            transform: translateX(5px);
+        }
+
+        .output-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+        }
+
+        .output-panel.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .output-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .output-content {
+            flex: 1;
+            padding: 20px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            background: #f8f9fa;
+        }
+
+        .download-links {
+            margin-top: 15px;
+            padding: 15px;
+            background: #e8f5e8;
+            border-radius: 8px;
+        }
+
+        .download-links button {
+            width: auto !important;
+            margin-right: 10px;
+            margin-bottom: 5px;
+        }
+
+        .tree-node {
+            margin-left: 10px;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-controls input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            .sidebar {
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛠️ JSON Refined Advance Edition</h1>
+            <p>Advanced JSON Editor, Validator, Formatter & API Tester</p>
+            <!-- FEATURE 3: Theme Toggle Button -->
+            <button class="theme-toggle" id="themeToggleBtn" title="Toggle Dark/Light Mode">🌙</button>
+        </div>
+
+        <div class="main-grid">
+            <div class="editor-panel">
+                <div class="editor-tabs">
+                    <button class="tab-btn active" data-tab="editor">Editor</button>
+                    <button class="tab-btn" data-tab="schema">Schema</button>
+                    <button class="tab-btn" data-tab="api">API Tester</button>
+                </div>
+                <div class="editor-container">
+                    <div id="editor" class="ace-editor"></div>
+                    <div id="schema-editor" class="ace-editor" style="display: none;"></div>
+                    <div id="api-editor" class="ace-editor" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <!-- FEATURE 1: Enhanced Quick Actions with NEW buttons -->
+                <div class="tool-panel">
+                    <h3>⚡ Quick Actions</h3>
+                    <button class="btn btn-primary" id="formatBtn">✨ Format JSON</button>
+                    <button class="btn btn-success" id="validateBtn">✅ Validate</button>
+                    <button class="btn btn-primary" id="minifyBtn">📦 Minify</button>
+                    <button class="btn btn-warning" id="clearBtn">🗑️ Clear</button>
+                    <button class="btn btn-primary" id="copyBtn">📋 Copy</button>
+                    <button class="btn btn-success" id="downloadBtn">💾 Download</button>
+                    <!-- NEW FEATURE 1: Tree View -->
+                    <button class="btn btn-info" id="treeViewBtn">🌳 Tree View</button>
+                    <!-- NEW FEATURE 2: Search & Replace -->
+                    <button class="btn btn-info" id="searchReplaceBtn">🔍 Search</button>
+                    <!-- NEW FEATURE 7: Table View -->
+                    <button class="btn btn-info" id="tableViewBtn">📊 Table View</button>
+                </div>
+
+                <div class="tool-panel">
+                    <h3>🔄 Convert</h3>
+                    <button class="btn btn-primary" id="toYamlBtn">↔️ To YAML</button>
+                    <button class="btn btn-primary" id="toXmlBtn">↔️ To XML</button>
+                    <button class="btn btn-primary" id="toCsvBtn">↔️ To CSV</button>
+                </div>
+
+                <!-- FEATURE 4: Enhanced API Panel -->
+                <div class="tool-panel">
+                    <h3>🚀 API Test</h3>
+                    <!-- NEW: Method selector -->
+                    <select id="apiMethod" style="width:100%; padding:10px; margin:5px 0; border:1px solid #ddd; border-radius:6px;">
+                        <option value="GET">GET</option>
+                        <option value="POST">POST</option>
+                        <option value="PUT">PUT</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                    <input type="text" id="apiUrl" placeholder="https://api.example.com/data" class="btn">
+                    <button class="btn btn-success" id="sendApiBtn">📤 Send Request</button>
+                    <div style="margin-top: 10px; font-size: 12px; color: #666;">
+                        <strong>Headers:</strong> Content-Type: application/json
+                    </div>
+                </div>
+
+                <!-- FEATURE 5: History Panel -->
+                <div class="history-panel">
+                    <h3>📜 History (5 steps)</h3>
+                    <div id="historyList"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="output-panel" id="outputPanel">
+            <div class="output-header">
+                <h3 id="outputTitle">📊 Results</h3>
+                <button class="btn btn-danger" id="closeOutput" style="width: auto; padding: 8px 16px; font-size: 12px;">✕</button>
+            </div>
+            <div class="output-content" id="outputContent"></div>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-indicator" id="statusIndicator">
+                <span>Ready</span>
+            </div>
+            <div class="char-counter" id="charCounter">0 characters</div>
+        </div>
+    </div>
+
+    <script>
+        class JSONRefinedApp {
+            constructor() {
+                this.editor = null;
+                this.schemaEditor = null;
+                this.apiEditor = null;
+                this.currentTab = 'editor';
+                this.history = [];
+                this.historyIndex = -1;
+                this.darkMode = false;
+                this.init();
+            }
+
+            init() {
+                this.setupEditors();
+                this.bindEvents();
+                this.loadSample();
+                this.updateStatus('Ready - 10 Features Active!', 'ok');
+            }
+
+            setupEditors() {
+                this.editor = ace.edit("editor");
+                this.editor.session.setMode("ace/mode/json");
+                this.editor.setTheme("ace/theme/monokai");
+                this.editor.setOptions({ fontSize: "14px", showPrintMargin: false, displayIndentGuides: false });
+
+                this.schemaEditor = ace.edit("schema-editor");
+                this.schemaEditor.session.setMode("ace/mode/json");
+                this.schemaEditor.setTheme("ace/theme/monokai");
+                this.schemaEditor.setOptions({ fontSize: "14px", showPrintMargin: false });
+
+                this.apiEditor = ace.edit("api-editor");
+                this.apiEditor.session.setMode("ace/mode/json");
+                this.apiEditor.setTheme("ace/theme/monokai");
+                this.apiEditor.setOptions({ fontSize: "14px", showPrintMargin: false });
+
+                this.editor.session.on('change', () => {
+                    this.updateCharCounter();
+                    this.saveToHistory();
+                });
+            }
+
+            bindEvents() {
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => this.switchTab(e.target.dataset.tab));
+                });
+
+                // Original buttons
+                document.getElementById('formatBtn').onclick = () => this.formatJSON();
+                document.getElementById('validateBtn').onclick = () => this.validateJSON();
+                document.getElementById('minifyBtn').onclick = () => this.minifyJSON();
+                document.getElementById('clearBtn').onclick = () => this.clearEditor();
+                document.getElementById('copyBtn').onclick = () => this.copyToClipboard();
+                document.getElementById('downloadBtn').onclick = () => this.downloadJSON();
+                document.getElementById('toYamlBtn').onclick = () => this.convertTo('yaml');
+                document.getElementById('toXmlBtn').onclick = () => this.convertTo('xml');
+                document.getElementById('toCsvBtn').onclick = () => this.convertTo('csv');
+                document.getElementById('sendApiBtn').onclick = () => this.testAPI();
+                document.getElementById('closeOutput').onclick = () => this.closeOutput();
+                document.getElementById('apiUrl').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.testAPI();
+                });
+
+                // NEW FEATURE BUTTONS
+                // Feature 1: Tree View
+                document.getElementById('treeViewBtn').onclick = () => this.showTreeView();
+                // Feature 2: Search & Replace
+                document.getElementById('searchReplaceBtn').onclick = () => this.showSearchReplace();
+                // Feature 3: Theme Toggle
+                document.getElementById('themeToggleBtn').onclick = () => this.toggleTheme();
+                // Feature 7: Table View
+                document.getElementById('tableViewBtn').onclick = () => this.showTableView();
+
+                // Feature 5: History items
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('history-item')) {
+                        const index = parseInt(e.target.dataset.index);
+                        this.loadHistoryItem(index);
+                    }
+                });
+
+                // Keyboard shortcuts
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        switch(e.key) {
+                            case 'z': e.preventDefault(); this.undo(); break;
+                            case 'y': e.preventDefault(); this.redo(); break;
+                        }
+                    }
+                });
+            }
+
+            // === NEW FEATURES ===
+
+            // 🌳 TREE VIEW - COMPLETE WORKING VERSION
+showTreeView() {
+    try {
+        const jsonStr = this.editor.getValue();
+        if (!jsonStr.trim()) {
+            this.showOutput('❌ Empty', 'Please add JSON data first');
+            return;
+        }
+        
+        const jsonObj = JSON.parse(jsonStr);
+        const treeHtml = this.buildTree(jsonObj, 0);
+        const controls = `
+            <div style="margin-bottom: 15px; padding: 10px; background: #e3f2fd; border-radius: 8px; display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="app.copyTree()" style="padding:8px 16px;font-size:12px;">📋 Copy Tree</button>
+                <button class="btn btn-success" onclick="app.collapseAll()" style="padding:8px 16px;font-size:12px;">📦 Collapse All</button>
+                <button class="btn btn-warning" onclick="app.expandAll()" style="padding:8px 16px;font-size:12px;">📂 Expand All</button>
+                <button class="btn btn-danger" onclick="app.closeOutput()" style="padding:8px 16px;font-size:12px;">✕ Close</button>
+            </div>
+            <div style="max-height: 70vh; overflow: auto;">${treeHtml}</div>
+        `;
+        this.showOutput('🌳 JSON Tree View', controls);
+        this.updateStatus('Tree view loaded!', 'ok');
+    } catch (e) {
+        this.showOutput('❌ Error', `Invalid JSON: ${e.message}`);
+    }
+}
+
+buildTree(obj, level = 0) {
+    const indent = '&nbsp;'.repeat(level * 4);
+    const style = `margin-left: ${level * 20}px; padding: 2px 0; border-left: 2px solid #e0e0e0;`;
+    
+    if (obj === null) return `<span style="color: #9e9e9e;">null</span>`;
+    if (typeof obj === 'string') return `<span style="color: #d32f2f; font-family: monospace;">"${this.escapeHtml(obj)}"</span>`;
+    if (typeof obj === 'number') return `<span style="color: #1976d2; font-weight: bold;">${obj}</span>`;
+    if (typeof obj === 'boolean') return `<span style="color: #f57c00; font-weight: bold;">${obj}</span>`;
+    
+    let html = '';
+    
+    if (Array.isArray(obj)) {
+        html = `<details style="${style}">
+            <summary style="cursor: pointer; color: #673ab7; font-weight: 500; list-style: none; padding: 5px;">
+                📦 Array[${obj.length}] <span style="color: #666; font-size: 12px;">click to ${document.querySelectorAll(`[data-level="${level}"]`).length ? 'collapse' : 'expand'}</span>
+            </summary>`;
+        obj.slice(0, 50).forEach((item, i) => {  // Limit to 50 items
+            html += `<div style="margin: 2px 0;">
+                <span style="background: #fff3e0; color: #ef6c00; padding: 1px 6px; border-radius: 3px; font-size: 11px;">[${i}]</span>
+                ${this.buildTree(item, level + 1)}
+            </div>`;
+        });
+        if (obj.length > 50) html += `<div style="color: #666; font-size: 12px;">... and ${obj.length - 50} more</div>`;
+    } else {
+        html = `<details style="${style}">
+            <summary style="cursor: pointer; color: #388e3c; font-weight: 500; list-style: none; padding: 5px;">
+                📂 Object (${Object.keys(obj).length} keys)
+            </summary>`;
+        Object.entries(obj).forEach(([key, value]) => {
+            html += `<div style="margin: 2px 0; padding-left: 10px;">
+                <span style="color: #424242; font-weight: 500; font-family: monospace;">"${this.escapeHtml(key)}"</span>: 
+                ${this.buildTree(value, level + 1)}
+            </div>`;
+        });
+    }
+    
+    html += '</details>';
+    return html;
+}
+
+copyTree() {
+    const treeContent = document.querySelector('.output-content').innerText;
+    navigator.clipboard.writeText(treeContent).then(() => {
+        app.updateStatus('Tree copied to clipboard!', 'ok');
+    });
+}
+
+collapseAll() {
+    document.querySelectorAll('details').forEach(el => el.removeAttribute('open'));
+    app.updateStatus('All collapsed!', 'ok');
+}
+
+expandAll() {
+    document.querySelectorAll('details').forEach(el => el.setAttribute('open', 'true'));
+    app.updateStatus('All expanded!', 'ok');
+}
+
+            // FEATURE 2: Search & Replace
+            showSearchReplace() {
+                const html = `
+                    <div style="font-family: monospace; line-height: 1.5;">
+                        <div class="search-controls">
+                            <input id="searchInput" placeholder="Search in JSON..." style="flex:2;">
+                            <input id="replaceInput" placeholder="Replace with..." style="flex:2;">
+                            <button class="btn btn-success" onclick="app.replaceSelected()" style="flex:1; padding:10px 5px;">Replace</button>
+                        </div>
+                        <div style="display:flex; gap:10px; margin-bottom:15px;">
+                            <button class="btn btn-primary" onclick="app.findNext()" style="flex:1;">⏭️ Next</button>
+                            <button class="btn btn-primary" onclick="app.findPrevious()" style="flex:1;">⏮️ Previous</button>
+                            <button class="btn btn-warning" onclick="app.replaceAll()" style="flex:1;">🔄 Replace All</button>
+                        </div>
+                        <div id="searchResults" style="background:#e3f2fd; padding:10px; border-radius:6px; font-size:12px;"></div>
+                    </div>
+                `;
+                this.showOutput('🔍 Search & Replace', html);
+                document.getElementById('searchInput').focus();
+            }
+
+            findNext() {
+                this.editor.findNext();
+            }
+
+            findPrevious() {
+                this.editor.findPrevious();
+            }
+
+            replaceSelected() {
+                const search = document.getElementById('searchInput').value;
+                const replace = document.getElementById('replaceInput').value;
+                this.editor.replace(search, replace);
+                this.updateStatus(`Replaced: "${search}" → "${replace}"`, 'ok');
+            }
+
+            replaceAll() {
+                const search = document.getElementById('searchInput').value;
+                const replace = document.getElementById('replaceInput').value;
+                let content = this.editor.getValue();
+                content = content.replace(new RegExp(this.escapeRegExp(search), 'g'), replace);
+                this.editor.setValue(content, -1);
+                this.updateStatus(`Replaced all "${search}"`, 'ok');
+            }
+
+            escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+
+            // FEATURE 3: Theme Toggle
+            toggleTheme() {
+                this.darkMode = !this.darkMode;
+                document.body.classList.toggle('dark-mode', this.darkMode);
+                const theme = this.darkMode ? "ace/theme/github" : "ace/theme/monokai";
+                [this.editor, this.schemaEditor, this.apiEditor].forEach(ed => ed.setTheme(theme));
+                document.getElementById('themeToggleBtn').textContent = this.darkMode ? '☀️' : '🌙';
+                localStorage.setItem('darkMode', this.darkMode);
+                this.updateStatus(`Theme: ${this.darkMode ? 'Dark' : 'Light'}`, 'ok');
+            }
+
+            // FEATURE 4: Enhanced API Testing
+            async testAPI() {
+                const url = document.getElementById('apiUrl').value.trim();
+                const method = document.getElementById('apiMethod').value;
+                if (!url) {
+                    this.showOutput('❌ API Error', 'Please enter a valid API URL');
+                    return;
+                }
+
+                try {
+                    this.updateStatus('Sending API request...', 'ok');
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: method !== 'GET' ? this.apiEditor.getValue() : null
+                    });
+
+                    let data;
+                    try {
+                        data = await response.json();
+                    } catch {
+                        data = await response.text();
+                    }
+
+                    const result = {
+                        method: method,
+                        url: url,
+                        status: response.status,
+                        statusText: response.statusText,
+                        data: data,
+                        headers: Object.fromEntries(response.headers.entries()),
+                        timestamp: new Date().toISOString()
+                    };
+
+                    this.showOutput(`✅ ${method.toUpperCase()} Response`, JSON.stringify(result, null, 2));
+                } catch (e) {
+                    this.showOutput('❌ API Error', `Failed to fetch: ${e.message}`);
+                }
+            }
+
+            // FEATURE 5: History/Undo Redo
+            saveToHistory() {
+                const content = this.editor.getValue();
+                if (this.history.length === 0 || this.history[this.history.length - 1] !== content) {
+                    this.history.push(content);
+                    if (this.history.length > 5) this.history.shift();
+                    this.historyIndex = this.history.length - 1;
+                    this.updateHistoryUI();
+                }
+            }
+
+            undo() {
+                if (this.historyIndex > 0) {
+                    this.historyIndex--;
+                    this.editor.setValue(this.history[this.historyIndex], -1);
+                    this.updateHistoryUI();
+                }
+            }
+
+            redo() {
+                if (this.historyIndex < this.history.length - 1) {
+                    this.historyIndex++;
+                    this.editor.setValue(this.history[this.historyIndex], -1);
+                    this.updateHistoryUI();
+                }
+            }
+
+            updateHistoryUI() {
+                const list = document.getElementById('historyList');
+                list.innerHTML = this.history.slice(Math.max(0, this.historyIndex - 4), this.historyIndex + 1)
+                    .map((item, i) => 
+                        `<div class="history-item" data-index="${this.historyIndex - (4 - i)}">
+                            ${item.length} chars • ${new Date().toLocaleTimeString()}
+                        </div>`
+                    ).join('');
+            }
+
+            loadHistoryItem(index) {
+                this.historyIndex = Math.max(0, Math.min(this.history.length - 1, index));
+                this.editor.setValue(this.history[this.historyIndex], -1);
+                this.updateStatus('History restored', 'ok');
+            }
+
+            // FEATURE 7: Table View
+            showTableView() {
+                try {
+                    const data = JSON.parse(this.editor.getValue());
+                    if (!Array.isArray(data) || data.length === 0) {
+                        return this.showOutput('❌ Table Error', 'Table view requires array of objects');
+                    }
+
+                    const headers = Object.keys(data[0]);
+                    let table = `
+                        <table>
+                            <thead>
+                                <tr>${headers.map(h => `<th>${this.escapeHtml(h)}</th>`).join('')}</tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    data.slice(0, 50).forEach(row => {
+                        table += `<tr>${headers.map(h => `<td>${this.escapeHtml(JSON.stringify(row[h] || ''))}</td>`).join('')}</tr>`;
+                    });
+                    
+                    table += '</tbody></table>';
+                    table += `<div style="margin-top:10px; font-size:12px; color:#666;">Showing first 50 rows of ${data.length} total</div>`;
+                    
+                    this.showOutput('📊 Table View', table);
+                } catch (e) {
+                    this.showOutput('❌ Error', 'Invalid JSON or not an array of objects');
+                }
+            }
+
+            // ORIGINAL METHODS (unchanged)
+            switchTab(tab) {
+                this.currentTab = tab;
+                document.querySelectorAll('.ace-editor').forEach(editor => editor.style.display = 'none');
+                const activeEditor = document.getElementById(tab + '-editor');
+                activeEditor.style.display = 'block';
+                document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+
+                const activeAce = tab === 'editor' ? this.editor : 
+                                 tab === 'schema' ? this.schemaEditor : this.apiEditor;
+                activeAce.resize();
+                this.updateCharCounter();
+            }
+
+            getCurrentEditor() {
+                switch(this.currentTab) {
+                    case 'editor': return this.editor;
+                    case 'schema': return this.schemaEditor;
+                    case 'api': return this.apiEditor;
+                    default: return this.editor;
+                }
+            }
+
+            getCurrentContent() {
+                return this.getCurrentEditor().getValue();
+            }
+
+            setCurrentContent(content) {
+                this.getCurrentEditor().setValue(content, -1);
+            }
+
+            formatJSON() {
+                try {
+                    const jsonStr = this.getCurrentContent();
+                    const jsonObj = JSON.parse(jsonStr);
+                    const formatted = JSON.stringify(jsonObj, null, 2);
+                    this.setCurrentContent(formatted);
+                    this.updateStatus('JSON formatted successfully', 'ok');
+                } catch (e) {
+                    this.showOutput('❌ Format Error', `Invalid JSON: ${e.message}`);
+                }
+            }
+
+            validateJSON() {
+    try {
+        const jsonStr = this.getCurrentContent();  // ← FIX 1: Current tab!
+        const jsonObj = JSON.parse(jsonStr);       // Syntax check
+        
+        // Schema validation if schema exists
+        if (this.schemaEditor.getValue().trim()) {
+            const schemaStr = this.schemaEditor.getValue();
+            const schema = JSON.parse(schemaStr);
+            const valid = this.validateAgainstSchema(jsonObj, schema);
+            
+            if (valid) {
+                this.updateStatus('✅ Valid against schema!', 'ok');
+            } else {
+                this.showOutput('❌ Schema Error', 'JSON fails schema validation');
+            }
+        } else {
+            this.updateStatus('✅ JSON syntax valid', 'ok');
+        }
+    } catch (e) {
+        // FIX 2: SHOW the actual error!
+        this.showOutput('❌ Syntax Error', `Line ${e.lineNumber || 'unknown'}: ${e.message}`);
+        console.error('Validation error:', e);  // Debug info
+    }
+}
+
+
+            validateAgainstSchema(data, schema) {
+                if (!schema.type || schema.type === 'object') {
+                    if (typeof data !== 'object' || Array.isArray(data)) return false;
+                    if (schema.properties) {
+                        for (let [key, propSchema] of Object.entries(schema.properties)) {
+                            if (data.hasOwnProperty(key) && !this.validateAgainstSchema(data[key], propSchema)) {
+                                return false;
+                            }
+                        }
+                    }
+                } else if (schema.type === 'array') {
+                    if (!Array.isArray(data)) return false;
+                    if (schema.items && data.some(item => !this.validateAgainstSchema(item, schema.items))) {
+                        return false;
+                    }
+                } else if (schema.type === 'string') {
+                    return typeof data === 'string';
+                }
+                return true;
+            }
+
+            minifyJSON() {
+                try {
+                    const jsonStr = this.getCurrentContent();
+                    const jsonObj = JSON.parse(jsonStr);
+                    const minified = JSON.stringify(jsonObj);
+                    this.setCurrentContent(minified);
+                    this.updateStatus('JSON minified successfully', 'ok');
+                } catch (e) {
+                    this.showOutput('❌ Minify Error', `Invalid JSON: ${e.message}`);
+                }
+            }
+
+            clearEditor() {
+                this.setCurrentContent('');
+                this.updateStatus('Editor cleared', 'ok');
+            }
+
+            copyToClipboard() {
+                navigator.clipboard.writeText(this.getCurrentContent()).then(() => {
+                    this.updateStatus('Copied to clipboard', 'ok');
+                });
+            }
+
+            downloadJSON() {
+                const content = this.getCurrentContent();
+                const blob = new Blob([content], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `json-refined-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.updateStatus('JSON downloaded', 'ok');
+            }
+
+            convertTo(type) {
+                try {
+                    const jsonObj = JSON.parse(this.getCurrentContent());
+                    let result;
+
+                    switch(type) {
+                        case 'yaml':
+                            result = this.jsonToYaml(jsonObj);
+                            break;
+                        case 'xml':
+                            result = this.jsonToXml(jsonObj);
+                            break;
+                        case 'csv':
+                            result = this.jsonToCsv(jsonObj);
+                            break;
+                    }
+
+                    this.showConvertedOutput(`↔️ Converted to ${type.toUpperCase()}`, result, type);
+                } catch (e) {
+                    this.showOutput('❌ Conversion Error', `Invalid JSON: ${e.message}`);
+                }
+            }
+
+            showConvertedOutput(title, content, type) {
+                const downloadHtml = `
+                    <div class="download-links">
+                        <button class="btn btn-success" onclick="app.downloadConverted('${type}', \`${content.replace(/`/g, '\\`')}\`)">💾 Download ${type.toUpperCase()}</button>
+                        <button class="btn btn-primary" onclick="navigator.clipboard.writeText(\`${content.replace(/`/g, '\\`')}\`); app.updateStatus('Copied to clipboard', 'ok')">📋 Copy</button>
+                    </div>
+                    <pre>${this.escapeHtml(content)}</pre>
+                `;
+                
+                document.getElementById('outputTitle').textContent = title;
+                document.getElementById('outputContent').innerHTML = downloadHtml;
+                document.getElementById('outputPanel').classList.add('active');
+            }
+
+            downloadConverted(type, content) {
+                let mimeType, extension;
+                switch(type) {
+                    case 'yaml': mimeType = 'text/yaml'; extension = 'yaml'; break;
+                    case 'xml': mimeType = 'application/xml'; extension = 'xml'; break;
+                    case 'csv': mimeType = 'text/csv'; extension = 'csv'; break;
+                }
+                
+                const blob = new Blob([content], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `converted-${type}-${Date.now()}.${extension}`;
+                a.click();
+                URL.revokeObjectURL(url);
+                this.updateStatus(`${type.toUpperCase()} downloaded`, 'ok');
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            jsonToYaml(obj, indent = 0) {
+                const space = ' '.repeat(indent);
+                if (obj === null) return 'null';
+                if (typeof obj === 'string') return obj.includes('\n') ? `'${obj.replace(/'/g, "''")}'` : obj;
+                if (typeof obj === 'number') return obj.toString();
+                if (typeof obj === 'boolean') return obj.toString();
+                if (Array.isArray(obj)) {
+                    return obj.length === 0 ? '[]' : 
+                        '[\n' + obj.map(item => `${space}  - ${this.jsonToYaml(item, indent + 2)}`).join('\n') + '\n' + space + ']';
+                }
+                return obj && typeof obj === 'object' ? 
+                    '{\n' + Object.entries(obj).map(([k, v]) => 
+                        `${space}  ${k}: ${this.jsonToYaml(v, indent + 2)}`
+                    ).join(',\n') + '\n' + space + '}' : '{}';
+            }
+
+            jsonToXml(obj, name = 'root') {
+                let xml = `<${name}>`;
+                if (typeof obj === 'object' && obj !== null) {
+                    if (Array.isArray(obj)) {
+                        obj.forEach((item, index) => {
+                            xml += this.jsonToXml(item, name === 'root' ? 'item' : name);
+                        });
+                    } else {
+                        Object.entries(obj).forEach(([key, value]) => {
+                            xml += this.jsonToXml(value, key.replace(/[^a-zA-Z0-9_-]/g, '_'));
+                        });
+                    }
+                } else {
+                    xml += this.escapeXml(String(obj || ''));
+                }
+                xml += `</${name}>`;
+                return xml;
+            }
+
+            escapeXml(unsafe) {
+                return unsafe.replace(/[<>&'"]/g, (c) => {
+                    switch (c) {
+                        case '<': return '&lt;';
+                        case '>': return '&gt;';
+                        case '&': return '&amp;';
+                        case '\'': return '&apos;';
+                        case '"': return '&quot;';
+                    }
+                });
+            }
+
+            jsonToCsv(obj) {
+                if (Array.isArray(obj) && obj.length > 0) {
+                    const headers = Object.keys(obj[0]);
+                    const csv = [headers.join(',')].concat(
+                        obj.map(row => headers.map(h => `"${String(row[h] || '').replace(/"/g, '""')}"`).join(','))
+                    ).join('\n');
+                    return csv;
+                }
+                return 'No array data found for CSV conversion. CSV requires an array of objects.';
+            }
+
+            loadSample() {
+                const sampleJson = `{
+ "user": {
+   "id": 1,
+   "name": "Sindhu bharathi",
+   "location": "Vadakku Valliyūr, Tamil Nadu, IN",
+   "projects": [
+     {
+       "title": "JSON Refined Advance Edition",
+       "status": "active",
+       "features": ["Editor", "Validator", "Formatter", "API Tester"]
+     }
+   ]
+ }
+}`;
+                this.editor.setValue(sampleJson, -1);
+                this.history.push(sampleJson);
+                this.updateHistoryUI();
+            }
+
+            updateStatus(message, type) {
+                const indicator = document.getElementById('statusIndicator');
+                indicator.innerHTML = `<span class="status-${type}">${message}</span>`;
+            }
+
+            updateCharCounter() {
+                const content = this.getCurrentContent();
+                const count = content.length;
+                document.getElementById('charCounter').textContent = `${count} characters`;
+            }
+
+            showOutput(title, content) {
+                document.getElementById('outputTitle').textContent = title;
+                document.getElementById('outputContent').innerHTML = content;
+                document.getElementById('outputPanel').classList.add('active');
+            }
+
+            closeOutput() {
+                document.getElementById('outputPanel').classList.remove('active');
+            }
+        }
+
+        let app;
+        document.addEventListener('DOMContentLoaded', () => {
+            app = new JSONRefinedApp();
+            if (localStorage.getItem('darkMode') === 'true') {
+                app.toggleTheme();
+            }
+        });
+    </script>
+</body>
+</html>
+ 
